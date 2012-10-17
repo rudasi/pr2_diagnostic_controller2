@@ -1,0 +1,5 @@
+<launch>
+   <rosparam file="$(find pr2_diagnostic_controller)/velocity_controller.yaml" command="load" />
+
+   <node pkg="pr2_controller_manager" type="spawner" args="velocity_controller" name="velocity_controller_spawner" />
+</launch>
