@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <pr2_diagnostic_controller/DiagnosticData.h>
 #include <pr2_hardware_interface/hardware_interface.h>
+#include <ethercat_hardware/MotorTraceSample.h>
 
 namespace controller
 {
