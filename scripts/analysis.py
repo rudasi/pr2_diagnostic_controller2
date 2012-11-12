@@ -8,25 +8,18 @@ import numpy
 from scipy.stats import scoreatpercentile
 import sys
 
-if len(sys.argv) == 2:
-  fn = sys.argv[1]
-else:
-  fn = 'results.yaml'
-  print "using default file", fn
-
-stream = file(fn, 'r')
-samples = load(stream)
-velocity = []
-encoder_position = []
-ppr = 1200.0
-delay = 1 
-filt1 = numpy.array([-1,1])
-
 def get_acceleration(velocity):
   acceleration = numpy.convolve(filt1, velocity)
-  acceleration = acceleration[delay:len(velocity)+delay]
+  print "\n\n first acceleration value is %d \n" %(acceleration[0])
+  print "\n\n last acceleration value is %d \n" %(acceleration[-1])
+  print "length of acceleration is %d" %(len(acceleration))
+  acceleration = acceleration[delay:len(velocity) + delay]
+  acceleration[-1] = 0
+  print "\n\n first acceleration value is %d \n" %(acceleration[0])
+  print "\n\n last acceleration value is %d \n" %(acceleration[-1])
+  print "length of acceleration is %d" %(len(acceleration))
   acceleration = abs(acceleration)
-  print velocity 
+#print velocity 
   acceleration = acceleration / acceleration.max()
   return acceleration
 
@@ -34,6 +27,9 @@ def check_for_spikes(spikes):
 #sorted_data = numpy.sort(spikes,kind='mergesort')
 # iq_range = scoreatpercentile(sorted_data,75) - scoreatpercentile(sorted_data,25)
 # outlier_limit = iq_range * 3 + scoreatpercentile(sorted_data,75)
+  global outlier_limit_neg
+  global outlier_limit_pos
+
   neg = [val for val in spikes if val < 0]
   pos = [val for val in spikes if val > 0]
 
@@ -87,46 +83,68 @@ def check_for_unplugged(velocity):
   if (len(zero_velocities) > 250 and (len(zero_encoder_positions) == len(zero_velocities))):
     print "Encoder could unplugged"
 
-for s in samples.sample_buffer:
-  velocity.append(s.velocity)
-  encoder_position.append(s.encoder_position)
 
-#a = numpy.array(encoder_position)
-#encoder_velocity = a[1:] - a[:-1]
-#encoder_velocity = (encoder_velocity / (2*numpy.pi)) * ppr
-velocity = numpy.array(velocity)
-encoder_position = numpy.array(encoder_position)
-#encoder_position_mod = encoder_position % (2*numpy.pi)
-acceleration = get_acceleration(velocity)
-print encoder_position
-#spikes = acceleration * (1.0/(abs(velocity) + 1))
-spikes = acceleration * (velocity)
-#velocity_ticks = (velocity / (2*numpy.pi)) * ppr / 1000.0
-check_for_spikes(spikes)
-check_for_unplugged(velocity)
+if __name__ == '__main__':
+  if len(sys.argv) == 2:
+    fn = sys.argv[1]
+  else:
+    fn = 'results.yaml'
+    print "using default file", fn
+  
+  outlier_limit_neg = 0
+  outlier_limit_pos = 0
+  stream = file(fn, 'r')
+  samples = load(stream)
+  velocity = []
+  encoder_position = []
+  ppr = 1200.0
+  delay = 1 
+  filt1 = numpy.array([-1,1])
 
-plt.figure()
-plt.subplot(311)
-plt.plot(velocity,label='velocity')
-plt.legend()
+  for s in samples.sample_buffer:
+    velocity.append(s.velocity)
+    encoder_position.append(s.encoder_position)
 
-plt.subplot(312)
-plt.plot(spikes,label='acceleration * abs(velocity)')
-#plt.plot(encoder_position_mod[:-2],spikes[:-2],'*',label='acceleration * abs(velocity)')
-plt.legend()
+  #a = numpy.array(encoder_position)
+  #encoder_velocity = a[1:] - a[:-1]
+  #encoder_velocity = (encoder_velocity / (2*numpy.pi)) * ppr
+  velocity = numpy.array(velocity)
+  encoder_position = numpy.array(encoder_position)
+  #encoder_position_mod = encoder_position % (2*numpy.pi)
+  acceleration = get_acceleration(velocity)
+  #print encoder_position
+  #spikes = acceleration * (1.0/(abs(velocity) + 1))
+  spikes = acceleration * (velocity)
+  #velocity_ticks = (velocity / (2*numpy.pi)) * ppr / 1000.0
+  check_for_spikes(spikes)
+  check_for_unplugged(velocity)
 
-plt.subplot(313)
-#plt.plot(encoder_position_mod[:-2],acceleration[:-2],'g*', label='acceleration')
-plt.plot(acceleration,'g', label='acceleration')
-plt.legend()
-
-#plt.subplot(414)
-#plt.plot(encoder_position_mod,'g*-', label='encoder_position')
-#plt.legend()
-
-if False:
   plt.figure()
-  plt.subplot(111)
-  plt.plot(encoder_velocity, '.', label='encoder velocity')
+  plt.subplot(311)
+  plt.plot(velocity,label='velocity')
+  plt.legend()
 
-plt.show()
+  temp_neg = outlier_limit_neg
+  temp_pos = outlier_limit_pos
+  outlier_limit_neg = [temp_neg for val in range(0,len(velocity))]
+  outlier_limit_pos = [temp_pos for val in range(0,len(velocity))]
+
+  plt.subplot(312)
+#plt.plot(xval,spikes,xval,outlier_limit_neg,xval,outlier_limit_pos,label='acceleration * abs(velocity)')
+  plt.plot(spikes,label='acceleration * abs(velocity)')
+  plt.plot(outlier_limit_neg,'r')
+  plt.plot(outlier_limit_pos,'r')
+
+  #plt.plot(encoder_position_mod[:-2],spikes[:-2],'*',label='acceleration * abs(velocity)')
+  plt.legend()
+
+  plt.subplot(313)
+  #plt.plot(encoder_position_mod[:-2],acceleration[:-2],'g*', label='acceleration')
+  plt.plot(acceleration,'g', label='acceleration')
+  plt.legend()
+
+  #plt.subplot(414)
+  #plt.plot(encoder_position_mod,'g*-', label='encoder_position')
+  #plt.legend()
+
+  plt.show()
