@@ -31,16 +31,16 @@ bool Pr2DiagnosticController::init(pr2_mechanism_model::RobotState *robot, ros::
     ROS_ERROR("Could not create buffer for motor trace samples");
     return false;
   }
-  std::string joint_name;
-  if (node_.getParam("/diag_joint_name",joint_name) == false)
+  std::string actuator_name;
+  if (node_.getParam("/diag_actuator_name",actuator_name) == false)
   {
       ROS_ERROR("joint wasnt there");
       return false;
   }
-  sample_ptr_ = robot_->model_->hw_->getData<ethercat_hardware::MotorTraceSample>(joint_name);
+  sample_ptr_ = robot_->model_->hw_->getData<ethercat_hardware::MotorTraceSample>(actuator_name);
   if(sample_ptr_ == NULL)
   {
-    ROS_ERROR("no data for actuator %s", joint_name.c_str());
+    ROS_ERROR("no data for actuator %s", actuator_name.c_str());
     return false;
   }
    
