@@ -18,8 +18,9 @@ list_controllers = rospy.ServiceProxy('pr2_controller_manager/list_controllers',
 flag1 = False 
 flag2 = False
 
-r_arm_joints = ['r_wrist_r_motor','r_wrist_l_motor','r_forearm_roll_motor','r_upper_arm_roll_motor', 'r_elbow_flex_motor','r_shoulder_lift_motor','r_shoulder_pan_motor']
-l_arm_joints = ['l_wrist_r_motor','l_wrist_l_motor','l_forearm_roll_motor','l_upper_arm_roll_motor', 'l_elbow_flex_motor','l_shoulder_lift_motor','l_shoulder_pan_motor']
+#dictionary of actuators and their resistances
+r_arm_actuators = {'r_wrist_r_motor':2.52,'r_wrist_l_motor':2.52,'r_forearm_roll_motor':1.16,'r_upper_arm_roll_motor':1.16, 'r_elbow_flex_motor':1.16,'r_shoulder_lift_motor':1.16,'r_shoulder_pan_motor':1.16}
+l_arm_actuators = {'l_wrist_r_motor':2.52,'l_wrist_l_motor':2.52,'l_forearm_roll_motor':1.16,'l_upper_arm_roll_motor':1.16, 'l_elbow_flex_motor':1.16,'l_shoulder_lift_motor':1.16,'l_shoulder_pan_motor':1.16}
 
 def wait_for_X():
     global flag1
@@ -33,9 +34,9 @@ def wait_for_circle():
     while not (flag2):
       rospy.sleep(0.01) 
 
-def start_diag_controller(joint_name):
+def start_diag_controller(actuator_name):
   rospy.set_param('diagnostic_controller/type', 'pr2_diagnostic_controller/DiagnosticControllerPlugin')
-  rospy.set_param('diag_joint_name',str(joint_name))
+  rospy.set_param('diag_actuator_name',str(actuator_name))
   resp = load_controller('diagnostic_controller')
 
   if resp.ok:
@@ -45,14 +46,14 @@ def start_diag_controller(joint_name):
   else:
     raise RuntimeError("Couldn't load contorller")
 
-def get_diag_data(joint_name):
+def get_diag_data(actuator_name):
     #flag2 = False
     get_data = rospy.ServiceProxy('diagnostic_controller/get_diagnostic_data',DiagnosticData)
-    rospy.loginfo("getting data for %s, wait 2 seconds",joint_name)
+    rospy.loginfo("getting data for %s, wait 2 seconds",actuator_name)
 
     foo = DiagnosticDataRequest();
     rv = get_data(foo)
-    stream = file(str(joint_name) + "_results" + '.yaml', 'w')
+    stream = file(str(actuator_name) + "_results" + '.yaml', 'w')
     dump(rv,stream)
 
     switch_controller([],['diagnostic_controller'], SwitchControllerRequest.STRICT)
@@ -78,27 +79,27 @@ def main():
   parser = argparse.ArgumentParser("script to get data for Pr2 arms for diagnostic analysis")
   parser.add_argument("arms", help="Specifiy left, right or both for the arms you want to get diagnostic data for.")
   args = parser.parse_args()
-  joint_list = []
+  actuator_list = []
   if (args.arms == 'left'):
-    joint_list = l_arm_joints
+    actuator_list = l_arm_actuators
   elif (args.arms == 'right'): 
-    joint_list = r_arm_joints
+    actuator_list = r_arm_actuators
   elif (args.arms == 'both'):
-    joint_list = r_arm_joints + l_arm_joints
+    actuator_list = r_arm_actuators + l_arm_actuators
   else:
     print "Bad arguments, exiting"
     sys.exit()
 
-  for joint_name in joint_list:
+  for actuator_name in actuator_list:
     print "Press X to start or for next joint"
     wait_for_X() 
-    start_diag_controller(joint_name)
-    print "start moving %s for about 5 seconds" %(joint_name)
+    start_diag_controller(actuator_name)
+    print "start moving %s for about 5 seconds" %(actuator_name)
     rospy.sleep(5.0)
     print "press circle when your done"
     #rospy.loginfo("move %s for about 5 seconds and then press circle when done", joint_name)
     wait_for_circle()
-    get_diag_data(joint_name)
+    get_diag_data(actuator_name)
   
 if __name__ == '__main__':
   try:
