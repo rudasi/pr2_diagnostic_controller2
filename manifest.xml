@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/pr2_diagnostic_controller</url>
   <depend package="pr2_controller_interface"/>
   <depend package="pr2_mechanism_model"/>
+  <depend package="pr2_mechanism_msgs"/>
   <depend package="pluginlib"/>
   <depend package="ethercat_hardware"/>
   <export>

@@ -10,14 +10,14 @@ import sys
 
 def get_acceleration(velocity):
   acceleration = numpy.convolve(filt1, velocity)
-  print "\n\n first acceleration value is %d \n" %(acceleration[0])
-  print "\n\n last acceleration value is %d \n" %(acceleration[-1])
-  print "length of acceleration is %d" %(len(acceleration))
+#print "\n\n first acceleration value is %d \n" %(acceleration[0])
+# print "\n\n last acceleration value is %d \n" %(acceleration[-1])
+# print "length of acceleration is %d" %(len(acceleration))
   acceleration = acceleration[delay:len(velocity) + delay]
   acceleration[-1] = 0
-  print "\n\n first acceleration value is %d \n" %(acceleration[0])
-  print "\n\n last acceleration value is %d \n" %(acceleration[-1])
-  print "length of acceleration is %d" %(len(acceleration))
+# print "\n\n first acceleration value is %d \n" %(acceleration[0])
+# print "\n\n last acceleration value is %d \n" %(acceleration[-1])
+# print "length of acceleration is %d" %(len(acceleration))
   acceleration = abs(acceleration)
 #print velocity 
   acceleration = acceleration / acceleration.max()
@@ -97,6 +97,11 @@ if __name__ == '__main__':
   samples = load(stream)
   velocity = []
   encoder_position = []
+  supply_voltage = []
+  measured_motor_voltage = []
+  executed_current = []
+  measured_current = []
+
   ppr = 1200.0
   delay = 1 
   filt1 = numpy.array([-1,1])
@@ -104,12 +109,21 @@ if __name__ == '__main__':
   for s in samples.sample_buffer:
     velocity.append(s.velocity)
     encoder_position.append(s.encoder_position)
+    supply_voltage.append(s.supply_voltage)
+    measured_motor_voltage.append(s.measured_motor_voltage)
+    executed_current.append(s.executed_current)
+    measured_current.append(s.measured_current)
 
   #a = numpy.array(encoder_position)
   #encoder_velocity = a[1:] - a[:-1]
   #encoder_velocity = (encoder_velocity / (2*numpy.pi)) * ppr
   velocity = numpy.array(velocity)
   encoder_position = numpy.array(encoder_position)
+   
+  supply_voltage = numpy.array(supply_voltage)
+  measured_motor_voltage = numpy.array(measured_motor_voltage)
+  exceuted_current = numpy.array(executed_current)
+  measured_current = numpy.array(measured_current)
   #encoder_position_mod = encoder_position % (2*numpy.pi)
   acceleration = get_acceleration(velocity)
   #print encoder_position
@@ -131,7 +145,7 @@ if __name__ == '__main__':
 
   plt.subplot(312)
 #plt.plot(xval,spikes,xval,outlier_limit_neg,xval,outlier_limit_pos,label='acceleration * abs(velocity)')
-  plt.plot(spikes,label='acceleration * abs(velocity)')
+  plt.plot(spikes,label='acceleration * velocity')
   plt.plot(outlier_limit_neg,'r')
   plt.plot(outlier_limit_pos,'r')
 
@@ -142,6 +156,13 @@ if __name__ == '__main__':
   #plt.plot(encoder_position_mod[:-2],acceleration[:-2],'g*', label='acceleration')
   plt.plot(acceleration,'g', label='acceleration')
   plt.legend()
+
+  plt.figure()
+  plt.plot(supply_voltage,'b',label='supply_voltage')
+  plt.plot(measured_motor_voltage,'g',label='measured_motor_voltage')
+  plt.plot(executed_current,'*y',label='executed_current')
+  plt.plot(measured_current,'m',label='measured_current')
+  plt.legend() 
 
   #plt.subplot(414)
   #plt.plot(encoder_position_mod,'g*-', label='encoder_position')
