@@ -90,6 +90,18 @@ def main():
     print "Bad arguments, exiting"
     sys.exit()
 
+  try:
+    switch_controller([],['diagnostic_controller'],SwitchControllerRequest.STRICT)
+  except:
+    break
+  else:
+    try:
+      unload_controller('diagnostic_controller')
+    except:
+      break
+    else:
+      continue
+
   for actuator_name in actuator_list:
     print "Press X to start or for next joint"
     wait_for_X() 

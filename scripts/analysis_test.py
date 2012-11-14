@@ -9,13 +9,16 @@ import numpy
 from scipy.stats import scoreatpercentile
 import sys
 
-r_arm_actuators = {'r_wrist_r_motor':2.52,'r_wrist_l_motor':2.52,'r_forearm_roll_motor':1.16,'r_upper_arm_roll_motor':1.16, 'r_elbow_flex_motor':1.16,'r_shoulder_lift_motor':1.16,'r_shoulder_pan_motor':1.16}
-l_arm_actuators = {'l_wrist_r_motor':2.52,'l_wrist_l_motor':2.52,'l_forearm_roll_motor':1.16,'l_upper_arm_roll_motor':1.16, 'l_elbow_flex_motor':1.16,'l_shoulder_lift_motor':1.16,'l_shoulder_pan_motor':1.16}
+#dictionary of actuators and their torque constants
+r_arm_actuators = {'r_wrist_r_motor':0.0538,'r_wrist_l_motor':0.0538,'r_forearm_roll_motor':0.0603,'r_upper_arm_roll_motor':0.0603, 'r_elbow_flex_motor':0.0603,'r_shoulder_lift_motor':0.0603,'r_shoulder_pan_motor':0.0603}
+l_arm_actuators = {'l_wrist_r_motor':0.0538,'l_wrist_l_motor':0.0538,'l_forearm_roll_motor':0.0603,'l_upper_arm_roll_motor':0.0603, 'l_elbow_flex_motor':0.0603,'l_shoulder_lift_motor':0.0603,'l_shoulder_pan_motor':0.0603}
 
-def get_acceleration(velocity):
-  acceleration = numpy.convolve(filt1, velocity)
-  acceleration = acceleration[delay:len(velocity) + delay]
-  acceleration[-1] = 0
+def get_acceleration(velocity, timestamp):
+#  acceleration = numpy.convolve(filt1, velocity)
+#  acceleration = acceleration[delay:len(velocity) + delay]
+  acceleration = (numpy.array(velocity[1:]) - numpy.array(velocity[:-1])) / (numpy.array(timestamp[1:]) - numpy.array(timestamp[:-1]))
+  
+# acceleration[-1] = 0
   acceleration = abs(acceleration)
   acceleration = acceleration / acceleration.max()
   return acceleration
@@ -53,17 +56,37 @@ def check_for_spikes(spikes):
 
   print "outliers in filtered data", outliers_neg, outliers_pos
 
-  if (len(outliers_neg) + len(outliers_pos)) >= 2:
+  if (len(outliers_neg) + len(outliers_pos)) >= 4:
     print "Encoder could be spoilt"
     return True
 
   return False
 
-def check_for_unplugged(velocity):
-  pass
+def check_for_unplugged(velocity, measured_motor_voltage):
+  zero_velocity = [val for val in velocity if val == 0]
+  zero_voltage = [val for val in measured_motor_voltage if val == 0]
+  zero_velocity = len(zero_velocity) / (len(velocity) + 0.0)
+  zero_voltage = len(zero_voltage) / (len(measured_motor_voltage) + 0.0)
+  print "percentage of zero velocity is", zero_velocity
+  print "percentage of zero voltage is", zero_voltage
 
-def check_for_open():
-  pass
+  if zero_velocity > 0.1 and zero_voltage < 0.05:
+    print "encoder could be unplugged"
+    return True
+  return False
+
+def check_for_open(velocity, measured_motor_voltage):
+  measured_motor_voltage = abs(measured_motor_voltage)
+  velocity = abs(velocity)
+  mean_voltage = measured_motor_voltage.mean()
+  mean_velocity = velocity.mean()
+  print "mean_voltage is ",mean_voltage
+  print "mean_velocity is ",mean_velocity
+  if mean_voltage < 0.05:
+    if mean_velocity > 0.3:
+      print "Motor wires could be cut causing open circuit"
+      return True
+  return False
 
 def plot(param):
   (filename,velocity,spikes,acceleration,outlier_limit_neg,outlier_limit_pos) = param
@@ -100,12 +123,6 @@ def plot(param):
 
     
 if __name__ == '__main__':
-#  if len(sys.argv) == 2:
-#   fn = sys.argv[1]
-# else:
-#fn = 'results.yaml'
-#   print "No folder provided, exiting"
-#   sys.exit()
   parser = argparse.ArgumentParser("script to analyse diagnostic data for PR2")
   parser.add_argument("files", help="Specify a file name or a folder with files to analyse")
   parser.add_argument("-s","--show", help="show all results or show only bad results, default is all results", action="store_true")
@@ -139,6 +156,7 @@ if __name__ == '__main__':
     measured_motor_voltage = []
     executed_current = []
     measured_current = []
+    timestamp = []
 
     for s in samples.sample_buffer:
       velocity.append(s.velocity)
@@ -147,22 +165,25 @@ if __name__ == '__main__':
       measured_motor_voltage.append(s.measured_motor_voltage)
       executed_current.append(s.executed_current)
       measured_current.append(s.measured_current)
+      timestamp.append(s.timestamp)
 
     velocity = numpy.array(velocity)
     encoder_position = numpy.array(encoder_position)
    
     supply_voltage = numpy.array(supply_voltage)
     measured_motor_voltage = numpy.array(measured_motor_voltage)
-    exceuted_current = numpy.array(executed_current)
+    executed_current = numpy.array(executed_current)
     measured_current = numpy.array(measured_current)
 
-    acceleration = get_acceleration(velocity)
+    acceleration = get_acceleration(velocity, timestamp)
 
-    spikes = acceleration * (velocity)
+    spikes = acceleration * (velocity[:-1])
 
-    result = check_for_spikes(spikes)
-    check_for_unplugged(velocity)
-    
+    result1 = check_for_spikes(spikes) 
+    result2 = check_for_unplugged(velocity, measured_motor_voltage)
+    result3 = check_for_open(velocity, measured_motor_voltage)
+    result = result1 and result2 and result3
+
     if args.show:
       if result:
         param = (filename,velocity,spikes,acceleration,outlier_limit_neg,outlier_limit_pos)

@@ -34,7 +34,7 @@ bool Pr2DiagnosticController::init(pr2_mechanism_model::RobotState *robot, ros::
   std::string actuator_name;
   if (node_.getParam("/diag_actuator_name",actuator_name) == false)
   {
-      ROS_ERROR("actuator wasnt there");
+      ROS_ERROR("actuator name not published");
       return false;
   }
   sample_ptr_ = robot_->model_->hw_->getData<ethercat_hardware::MotorTraceSample>(actuator_name);

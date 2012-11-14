@@ -36,12 +36,10 @@ private:
   {
     if (sample_mutex_.try_lock())
     {
-      //ROS_INFO("got lock in try lock");
       return true;
     }
     else
     {
-      ROS_INFO("did not get lock in try lock");
       return false;
     }
   }
@@ -49,7 +47,6 @@ private:
   void lock()
   {
     sample_mutex_.lock();
-    ROS_INFO("Got lock in lock");
   }
 
   void unlock()
