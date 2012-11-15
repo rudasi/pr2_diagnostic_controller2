@@ -19,8 +19,9 @@ flag1 = False
 flag2 = False
 
 #dictionary of actuators and their resistances
-r_arm_actuators = {'r_wrist_r_motor':2.52,'r_wrist_l_motor':2.52,'r_forearm_roll_motor':1.16,'r_upper_arm_roll_motor':1.16, 'r_elbow_flex_motor':1.16,'r_shoulder_lift_motor':1.16,'r_shoulder_pan_motor':1.16}
-l_arm_actuators = {'l_wrist_r_motor':2.52,'l_wrist_l_motor':2.52,'l_forearm_roll_motor':1.16,'l_upper_arm_roll_motor':1.16, 'l_elbow_flex_motor':1.16,'l_shoulder_lift_motor':1.16,'l_shoulder_pan_motor':1.16}
+r_arm_actuators = ['r_wrist_r_motor','r_wrist_l_motor','r_forearm_roll_motor','r_upper_arm_roll_motor', 'r_elbow_flex_motor','r_shoulder_lift_motor','r_shoulder_pan_motor']
+l_arm_actuators = ['l_wrist_r_motor','l_wrist_l_motor','l_forearm_roll_motor','l_upper_arm_roll_motor', 'l_elbow_flex_motor','l_shoulder_lift_motor','l_shoulder_pan_motor']
+head = ['head_pan_motor','head_tilt_motor']
 
 def wait_for_X():
     global flag1
@@ -77,7 +78,7 @@ def main():
   rospy.init_node('get_data', anonymous=True)
   rospy.Subscriber("joy", Joy, callback)
   parser = argparse.ArgumentParser("script to get data for Pr2 arms for diagnostic analysis")
-  parser.add_argument("arms", help="Specifiy left, right or both for the arms you want to get diagnostic data for.")
+  parser.add_argument("parts", help="Specifiy left, right or both for the arms you want to get diagnostic data for and head for the head.")
   args = parser.parse_args()
   actuator_list = []
   if (args.arms == 'left'):
@@ -86,21 +87,14 @@ def main():
     actuator_list = r_arm_actuators
   elif (args.arms == 'both'):
     actuator_list = r_arm_actuators + l_arm_actuators
+  elif (args.arms == 'head')
+    actuator_list = head;
   else:
     print "Bad arguments, exiting"
     sys.exit()
 
-  try:
-    switch_controller([],['diagnostic_controller'],SwitchControllerRequest.STRICT)
-  except:
-    break
-  else:
-    try:
-      unload_controller('diagnostic_controller')
-    except:
-      break
-    else:
-      continue
+  switch_controller([],['diagnostic_controller'],SwitchControllerRequest.STRICT)
+  unload_controller('diagnostic_controller')
 
   for actuator_name in actuator_list:
     print "Press X to start or for next joint"
