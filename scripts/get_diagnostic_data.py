@@ -81,7 +81,7 @@ def main():
   parser.add_argument("parts", help="Specifiy left, right or both for the arms you want to get diagnostic data for and head for the head.")
   args = parser.parse_args()
   actuator_list = []
-  if (args.arms == 'left'):
+  if (args.parts == 'left'):
     actuator_list = l_arm_actuators
   elif (args.arms == 'right'): 
     actuator_list = r_arm_actuators
