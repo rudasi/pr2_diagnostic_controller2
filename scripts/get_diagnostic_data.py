@@ -83,11 +83,11 @@ def main():
   actuator_list = []
   if (args.parts == 'left'):
     actuator_list = l_arm_actuators
-  elif (args.arms == 'right'): 
+  elif (args.parts == 'right'): 
     actuator_list = r_arm_actuators
-  elif (args.arms == 'both'):
+  elif (args.parts == 'both'):
     actuator_list = r_arm_actuators + l_arm_actuators
-  elif (args.arms == 'head'):
+  elif (args.parts == 'head'):
     actuator_list = head
   else:
     print "Bad arguments, exiting"
