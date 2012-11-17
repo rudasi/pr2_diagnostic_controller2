@@ -87,8 +87,8 @@ def main():
     actuator_list = r_arm_actuators
   elif (args.arms == 'both'):
     actuator_list = r_arm_actuators + l_arm_actuators
-  elif (args.arms == 'head')
-    actuator_list = head;
+  elif (args.arms == 'head'):
+    actuator_list = head
   else:
     print "Bad arguments, exiting"
     sys.exit()
