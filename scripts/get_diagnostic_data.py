@@ -81,14 +81,14 @@ def main():
   parser.add_argument("parts", help="Specifiy left, right or both for the arms you want to get diagnostic data for and head for the head.")
   args = parser.parse_args()
   actuator_list = []
-  if (args.parts == 'left'):
+  if (args.arms == 'left'):
     actuator_list = l_arm_actuators
-  elif (args.parts == 'right'): 
+  elif (args.arms == 'right'): 
     actuator_list = r_arm_actuators
-  elif (args.parts == 'both'):
+  elif (args.arms == 'both'):
     actuator_list = r_arm_actuators + l_arm_actuators
-  elif (args.parts == 'head'):
-    actuator_list = head
+  elif (args.arms == 'head')
+    actuator_list = head;
   else:
     print "Bad arguments, exiting"
     sys.exit()
